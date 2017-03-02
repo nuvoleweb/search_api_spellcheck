@@ -33,6 +33,15 @@ class SpellCheck extends AreaPluginBase {
   /**
    * {@inheritdoc}
    */
+  protected function defineOptions() {
+    $options = parent::defineOptions();
+    $options['search_api_spellcheck_title']['default'] = '';
+    return $options;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function buildOptionsForm(&$form, FormStateInterface $form_state) {
     parent::buildOptionsForm($form, $form_state);
 
@@ -74,10 +83,15 @@ class SpellCheck extends AreaPluginBase {
         foreach ($extra_data['spellcheck'] as $suggestion) {
           // If we have a match within our filters we add the suggestion.
           if ($filter = $this->getFilterMatch($suggestion)) {
+            // Merge the query parameters.
+            if (is_array($this->getCurrentQuery())) {
+              $filter = array_merge($this->getCurrentQuery(), $filter);
+            }
+            // Add the suggestion.
             $suggestions[] = [
               '#type' => 'link',
               '#title' => reset($filter),
-              '#url' => Url::fromRoute('<current>', [], ['query' => array_merge($this->getCurrentQuery(), $filter)]),
+              '#url' => Url::fromRoute('<current>', [], ['query' => $filter]),
             ];
           }
         }
@@ -100,7 +114,7 @@ class SpellCheck extends AreaPluginBase {
    *   Key value of parameters.
    */
   protected function getCurrentQuery() {
-    if (NULL !== $this->currentQuery) {
+    if (NULL === $this->currentQuery) {
       $this->currentQuery = \Drupal::request()->query->all();
     }
     return $this->currentQuery;
@@ -118,6 +132,10 @@ class SpellCheck extends AreaPluginBase {
       $exposed_input = $this->view->getExposedInput();
       foreach ($this->view->filter as $key => $filter) {
         if ($filter instanceof SearchApiFulltext) {
+          // The filter could be different then the key.
+          if (!empty($filter->options['expose']['identifier'])) {
+            $key = $filter->options['expose']['identifier'];
+          }
           $this->filters[$key] = !empty($exposed_input[$key]) ? $exposed_input[$key] : FALSE;
         }
       }
