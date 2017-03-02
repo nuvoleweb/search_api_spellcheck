@@ -36,6 +36,7 @@ class SpellCheck extends AreaPluginBase {
   protected function defineOptions() {
     $options = parent::defineOptions();
     $options['search_api_spellcheck_title']['default'] = '';
+    $options['search_api_spellcheck_hide_on_result']['default'] = TRUE;
     return $options;
   }
 
@@ -49,6 +50,12 @@ class SpellCheck extends AreaPluginBase {
       '#type' => 'textfield',
       '#title' => $this->t('The title to announce the suggestions. Default: suggestions:'),
       '#default_value' => isset($this->options['search_api_spellcheck_title']) ? $this->options['search_api_spellcheck_title'] : '',
+    );
+
+    $form['search_api_spellcheck_hide_on_result'] = array(
+      '#type' => 'checkbox',
+      '#title' => $this->t('Hide when the view has results.'),
+      '#default_value' => isset($this->options['search_api_spellcheck_hide_on_result']) ? $this->options['search_api_spellcheck_hide_on_result'] : TRUE,
     );
   }
 
@@ -72,36 +79,38 @@ class SpellCheck extends AreaPluginBase {
    *   In any case we need a valid Drupal render array to return.
    */
   public function render($empty = FALSE) {
-    $result = $this->query->getSearchApiResults();
-    // Check if extraData is there.
-    if ($extra_data = $result->getExtraData('search_api_solr_response')) {
-      // Initialize our array.
-      $suggestions = [];
-      // Check that we have suggestions.
-      if (!empty($extra_data['spellcheck'])) {
-        // Loop over the suggestions and print them as links.
-        foreach ($extra_data['spellcheck'] as $suggestion) {
-          // If we have a match within our filters we add the suggestion.
-          if ($filter = $this->getFilterMatch($suggestion)) {
-            // Merge the query parameters.
-            if (is_array($this->getCurrentQuery())) {
-              $filter = array_merge($this->getCurrentQuery(), $filter);
+    if ($this->options['search_api_spellcheck_hide_on_result'] == FALSE || ($this->options['search_api_spellcheck_hide_on_result'] && $empty)) {
+      $result = $this->query->getSearchApiResults();
+      // Check if extraData is there.
+      if ($extra_data = $result->getExtraData('search_api_solr_response')) {
+        // Initialize our array.
+        $suggestions = [];
+        // Check that we have suggestions.
+        if (!empty($extra_data['spellcheck'])) {
+          // Loop over the suggestions and print them as links.
+          foreach ($extra_data['spellcheck'] as $suggestion) {
+            // If we have a match within our filters we add the suggestion.
+            if ($filter = $this->getFilterMatch($suggestion)) {
+              // Merge the query parameters.
+              if (is_array($this->getCurrentQuery())) {
+                $filter = array_merge($this->getCurrentQuery(), $filter);
+              }
+              // Add the suggestion.
+              $suggestions[] = [
+                '#type' => 'link',
+                '#title' => reset($filter),
+                '#url' => Url::fromRoute('<current>', [], ['query' => $filter]),
+              ];
             }
-            // Add the suggestion.
-            $suggestions[] = [
-              '#type' => 'link',
-              '#title' => reset($filter),
-              '#url' => Url::fromRoute('<current>', [], ['query' => $filter]),
-            ];
           }
         }
-      }
-      if (!empty($suggestions)) {
-        return [
-          '#title' => $this->getSuggestionLabel(),
-          '#theme' => 'item_list',
-          '#items' => $suggestions,
-        ];
+        if (!empty($suggestions)) {
+          return [
+            '#title' => $this->getSuggestionLabel(),
+            '#theme' => 'item_list',
+            '#items' => $suggestions,
+          ];
+        }
       }
     }
     return [];
