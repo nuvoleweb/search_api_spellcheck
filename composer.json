@@ -1,0 +1,15 @@
+{
+    "name": "drupal/search_api_spellcheck",
+    "description": "Allows you to display search spellcheck suggestions in views.",
+    "type": "drupal-module",
+    "license": "GPL-2.0",
+    "authors": [
+        {
+            "name": "Nuvole",
+            "homepage": "http://nuvole.org/"
+        }
+    ],
+    "support": {
+        "issues": "http://drupal.org/"
+    }
+}
