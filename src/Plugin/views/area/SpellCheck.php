@@ -134,7 +134,7 @@ class SpellCheck extends AreaPluginBase {
    * @return bool|string
    *   False or the matching filter.
    */
-  private function getFilterMatch($suggestion) {
+  private function getFilterMatch(array $suggestion) {
     if ($index = array_search($suggestion[0], $this->getFilters(), TRUE)) {
       // @todo: Better validation.
       if (!empty($suggestion[1]['suggestion'][0])) {
@@ -152,4 +152,5 @@ class SpellCheck extends AreaPluginBase {
   private function getSuggestionLabel() {
     return !empty($this->options['search_api_spellcheck_title']) ? $this->options['search_api_spellcheck_title'] : $this->t('Suggestions:');
   }
+
 }
