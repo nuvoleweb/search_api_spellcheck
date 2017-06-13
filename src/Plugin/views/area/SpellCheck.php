@@ -89,6 +89,10 @@ class SpellCheck extends AreaPluginBase {
         if (!empty($extra_data['spellcheck'])) {
           // Loop over the suggestions and print them as links.
           foreach ($extra_data['spellcheck'] as $suggestion) {
+            // Check if the suggestion itself is empty and skip if it is.
+            if (empty($suggestion)) {
+              continue;
+            }
             // If we have a match within our filters we add the suggestion.
             if ($filter = $this->getFilterMatch($suggestion)) {
               // Merge the query parameters.
