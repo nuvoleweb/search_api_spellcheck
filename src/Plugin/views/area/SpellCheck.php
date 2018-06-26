@@ -145,7 +145,7 @@ class SpellCheck extends AreaPluginBase {
           if (!empty($filter->options['expose']['identifier'])) {
             $key = $filter->options['expose']['identifier'];
           }
-          $this->filters[$key] = !empty($exposed_input[$key]) ? $exposed_input[$key] : FALSE;
+          $this->filters[$key] = !empty($exposed_input[$key]) ? strtolower($exposed_input[$key]) : FALSE;
         }
       }
     }
