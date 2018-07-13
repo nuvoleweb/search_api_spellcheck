@@ -86,34 +86,45 @@ class SpellCheck extends AreaPluginBase {
         // Initialize our array.
         $suggestions = [];
         // Check that we have suggestions.
-        if (!empty($extra_data['spellcheck'])) {
-          // Loop over the suggestions and print them as links.
-          foreach ($extra_data['spellcheck'] as $suggestion) {
-            // If we have a match within our filters we add the suggestion.
-            if ($filter = $this->getFilterMatch($suggestion)) {
-              // Merge the query parameters.
-              if (is_array($this->getCurrentQuery())) {
-                $filter = array_merge($this->getCurrentQuery(), $filter);
-              }
-              // Add the suggestion.
-              $suggestions[] = [
-                '#type' => 'link',
-                '#title' => reset($filter),
-                '#url' => Url::fromRoute('<current>', [], ['query' => $filter]),
+        $keys = $this->view->getExposedInput()['keys'];
+
+        $new_data = [];
+        if (!empty($extra_data['spellcheck']['suggestions'])) {
+          foreach ($extra_data['spellcheck']['suggestions'] as $key => $value) {
+            if (is_string($value)) {
+              $new_data[$key] = [
+                'error' => $value,
+                'suggestion' => $extra_data['spellcheck']['suggestions'][$key + 1]['suggestion'][0],
               ];
             }
           }
         }
-        if (!empty($suggestions)) {
-          return [
-            '#title' => $this->getSuggestionLabel(),
-            '#theme' => 'item_list',
-            '#items' => $suggestions,
-          ];
+
+        foreach ($new_data as $datum) {
+          $keys = str_replace($datum['error'], $datum['suggestion'], $keys);
         }
+
+        $output = [
+          [
+            '#type' => 'html_tag',
+            '#tag' => 'span',
+            '#value' => $this->t('Did you mean: '),
+          ],
+          [
+            '#type' => 'link',
+            '#title' => str_replace('+', ' ', $keys),
+            '#url' => Url::fromRoute('<current>', [], ['query' => ['keys' => str_replace(' ', '+', $keys)]]),
+          ],
+          [
+            '#type' => 'html_tag',
+            '#tag' => 'span',
+            '#value' => $this->t('?'),
+          ],
+        ];
+        return $output;
+
       }
     }
-    return [];
   }
 
   /**
